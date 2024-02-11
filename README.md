@@ -1,7 +1,7 @@
 # bitburner-scripts
 Loads of spoilers.  
 Collection of personal BitBurner scripts remaining after completing most of the game.  
-All scripts should be placed in the base folder of the home server. Placing them in a subdirectory (ie /lategame/...) is not tested.
+All scripts should be placed in the base folder of the home server. Placing them in a subdirectory (ie /earlygame/...) is not tested.
 
 # easyRun
 The script named 'easyRun.js' is used for turning the RAM costs linked to functions dynamic. It must be present for most of these scripts to function.  
