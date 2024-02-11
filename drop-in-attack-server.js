@@ -3,6 +3,8 @@
 
 This script for NS (NetworkScript) automates hacking activities. It accepts arguments for loop wait time, maximum stack, and a debug flag.
 
+Requires 14.5GB of RAM on the host running it.
+
 ## Features
 - **Dynamic Wait Time and Max Stack**: Configures loop wait (`LOOPWAIT`) and max stack (`MAXSTACK`) based on arguments or defaults to 1 and 50, respectively.
 - **Debugging**: Includes a debug flag (`DEBUGFLAG`) to toggle verbose logging.
