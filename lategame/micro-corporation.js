@@ -377,6 +377,7 @@ export async function main(ns) {
       let investmentOffer = await easyRun(ns, "corporation/getInvestmentOffer");
       let bitnodeMultis = await easyRun(ns, "ns/getBitNodeMultipliers");
       let corpValuationModifier = bitnodeMultis.CorporationValuation;
+      if (!(corpValuationModifier)) corpValuationModifier = 1;
       let modifiedInvestmentTarget = 9e12*corpValuationModifier;
       modifiedInvestmentTarget = Math.max(modifiedInvestmentTarget, 3e12); // AT LEAST 3 trillion (need money for buildout)
       ns.print(`Investment offer: ${ns.formatNumber(investmentOffer.funds, 2)}, investment target: ${ns.formatNumber(modifiedInvestmentTarget, 2)}, investment round: ${investmentOffer.round}`);
@@ -550,6 +551,7 @@ export async function main(ns) {
     if (investmentOffer !== undefined && investmentOffer !== null){
       let bitnodeMultis = await easyRun(ns, "ns/getBitNodeMultipliers");
       let corpValuationModifier = bitnodeMultis.CorporationValuation;
+      if (!(corpValuationModifier)) corpValuationModifier = 1;
       let investmentRound = investmentOffer.round;
       let investmentGoal;
 
