@@ -1,6 +1,7 @@
 import {easyRun} from '/easyRun.js'; // easyRun executes (AND creates, as necessary) script-ized functions for easy RAM dodging.
+import {retrieveServerData} from '/customGetServers.js'; // easyRun executes (AND creates, as necessary) script-ized functions for easy RAM dodging.
 /** @param {NS} ns */
-export async function main(ns) { // only partially converted to easyRun usage
+export async function main(ns) {
   const LOOPWAIT = (typeof ns.args[0] === 'number') ? ns.args[0] : 1;
   const MAXSTACK = typeof ns.args[1] === 'number' ? ns.args[1] : 50;
   const WEAKEN_POWER = 0.05;
@@ -30,31 +31,33 @@ export async function main(ns) { // only partially converted to easyRun usage
   ns.disableLog("exec");
   ns.disableLog("getHackingLevel");
 
-// Initially copy expected scripts to the host, (for if NOT running on home)
-  ns.scp("one-hack.js", hostName, "home");
-  ns.scp("one-grow.js", hostName, "home");
-  ns.scp("one-weaken.js", hostName, "home");
-  ns.scp("more-complex-scan.js", hostName, "home");
-  ns.scp("crack-list.js", hostName, "home");
-// execute complex scan to ensure server_list.txt exists & we can find targets
-  ns.run("more-complex-scan.js", 1);
-
   if (ns.args.includes('-p')){
     //  execute purchase server if flagged
     ns.run("purchase-servers.js",1 );
   }
-  await ns.sleep(250);
-  const HACK_RAM = ns.getScriptRam("one-hack.js");
-  // example 'one-x.js':
-  /** @param {NS} ns */ 
-  /*
-  export async function main(ns) { 
-    let basicHGWOptions = {additionalMsec:(ns.args[0] ?? 0)} 
-    await ns.grow(ns.args[1], basicHGWOptions); 
+
+// Create one-shot hack/grow/weaken scripts w/ basicHGWOptions functionality, if they are not already in existence.
+  const scriptContents1 = `/** @param {NS} ns */
+  export async function main(ns) {
+    let basicHGWOptions = { additionalMsec: (ns.args[0] ?? 0) };
+    await ns.`;
+  const scriptContents2 = `(ns.args[1], basicHGWOptions);
+  }`
+  const oneDoneScripts = ["grow", "hack", "weaken"]
+  for (const type of oneDoneScripts){
+    let exists = await easyRun(ns, "ns/fileExists"`one-${type}.js`)
+    if (!exists){  
+      const scriptContents = `${scriptContents1}${type}${scriptContents2}`;
+      ns.write(`one-${type}.js`, scriptContents, "w"); 
+    }
   }
-  */
-  const GROW_RAM = ns.getScriptRam("one-grow.js");
-  const WEAKEN_RAM = ns.getScriptRam("one-weaken.js");
+
+  await ns.sleep(250);
+  const HACK_RAM = await easyRun(ns, "ns/getScriptRam", "one-hack.js");
+  const GROW_RAM = await easyRun(ns, "ns/getScriptRam", "one-grow.js");
+  const WEAKEN_RAM = await easyRun(ns, "ns/getScriptRam", "one-weaken.js");
+
+  
 
 let targetsandstackcount = [];
 
@@ -83,8 +86,7 @@ while (true) {
 
   // also if function powers get really strong?
   // Update server data
-  let servers = retrieveServerData(ns);
-  ns.run("crack-list.js", 1);
+  let servers = await retrieveServerData(ns);
 
   // hacking level for filtering
   let hackinglevel = ns.getHackingLevel();
@@ -168,13 +170,17 @@ while (true) {
         // Calculate how many threads are needed for each operation
         let growThreads = 1; // initialize
         // aim to take a bit more than half AVAILABLE
-        let hackThreads = target.moneyAvailable >= 1 ?
-          Math.ceil(ns.hackAnalyzeThreads(target.name, (0.95*(target.moneyAvailable/2)))) : 0;
+
+        const aboutHalfMoney = (0.95*(target.moneyAvailable/2));
+        let initialHackThreads =  await easyRun(ns, "ns/hackAnalyzeThreads", target.name, aboutHalfMoney)
+
+        let hackThreads = target.moneyAvailable >= 1 ? Math.ceil(initialHackThreads): 0;
 
         // if the target has max money and has more than a dollar to it's name (ensuring growRatio is a real number and not infinite)
         if (target.maxMoney > 0 && target.moneyAvailable > 0){
           //  EXPECTED money remaining in server after hack:
-          let projectedServerCash = target.moneyAvailable * (1 - (hackThreads * ns.hackAnalyze(target.name)));
+          const singleThreadTakeAsPercent = await easyRun(ns, "ns/hackAnalyze", target.name);
+          let projectedServerCash = target.moneyAvailable * (1 - (hackThreads * singleThreadTakeAsPercent));
 
           if (projectedServerCash <= 0){ projectedServerCash = 1; }
           // ratio to grow from projected remaining money to full * 1.1 extra
@@ -192,8 +198,10 @@ while (true) {
           await ns.sleep(5 * 60 * 1000);
         }
 
-        let weaken1Threads = Math.max(1, Math.ceil(ns.hackAnalyzeSecurity(hackThreads) / WEAKEN_POWER));
-        let weaken2Threads = Math.max(1, Math.ceil(ns.growthAnalyzeSecurity(growThreads) / WEAKEN_POWER));
+        const securityIncreaseFromHack = await easyRun(ns, "ns/hackAnalyzeSecurity", hackThreads)
+        let weaken1Threads = Math.max(1, Math.ceil(securityIncreaseFromHack / WEAKEN_POWER));
+        const securityIncreaseFromGrow = await easyRun(ns, "ns/growthAnalyzeSecurity", growThreads)
+        let weaken2Threads = Math.max(1, Math.ceil(securityIncreaseFromGrow / WEAKEN_POWER));
 
         // Check if target has reasonable security and money (drop security FIRST)
         if (target.securityLevel > 1.1 * target.minSecurityLevel){
@@ -229,7 +237,7 @@ while (true) {
         let bestServer = null;
         let deployed = false;
         controllableServers = 
-          retrieveServerData(ns).filter(server => 
+          (await retrieveServerData(ns)).filter(server => 
             (server.numPortsRequired <= tools && !server.name.includes("hacknet")) 
             || purchasedServersList.includes(server.name)
             || (server.name === "home" && server.freeRam > 128)
@@ -335,7 +343,7 @@ while (true) {
 
   // update controllableserver values for accurate calculations after deploy cycle
   controllableServers = 
-    retrieveServerData(ns).filter(server => 
+    (await retrieveServerData(ns)).filter(server => 
       (server.numPortsRequired <= tools && !server.name.includes("hacknet")) 
       || purchasedServersList.includes(server.name)
       || (server.name === "home" && server.freeRam > 128)
@@ -542,34 +550,6 @@ ${maxStackString} | ${networkRAMString}${COLOR_RESET}`;
       if (so.requiredHackingSkill > player.skills.hacking / 2) return 0;
       return weight;
   }//-----------------------------------------------------------------------------------------------------------
-
-  function retrieveServerData(ns) {
-    ns.run("more-complex-scan.js", 1);
-    let csvContent = ns.read("server_list.txt"); // Read the entire content of the CSV file
-    let lines = csvContent.split("\n");
-    lines.shift(); // Skip the header line
-    let serverarray = []; // Array to hold server objects
-    for (let line of lines) {
-        if (line.trim() === "") continue;  // To handle potential empty lines
-        let parts = line.split(",");
-        let server = {
-          // parts[n] = column N in server_list.txt
-            name: parts[0].trim(),
-            numPortsRequired: parseInt(parts[1], 10),
-            maxMoney: parseFloat(parts[2]),
-            requiredLevel: parseInt(parts[3], 10),
-            minSecurityLevel: parseInt(parts[4], 10),
-             maxRam: parseFloat(parts[5]),
-            depth: parseInt(parts[6], 10),
-            moneyAvailable: parseFloat(parts[7]),
-            securityLevel: parseInt(parts[8], 10),
-            usedRam: parseFloat(parts[9]),
-            freeRam: parseFloat(parts[10])
-        };
-        serverarray.push(server);
-     } 
-     return serverarray;
-  }
 
   function millisecondsToTimeString(milliseconds) {// convert a milliseconds number into a pretty time string
     let hours = Math.floor(milliseconds / 3600000); // 1 hour = 3600000 milliseconds
