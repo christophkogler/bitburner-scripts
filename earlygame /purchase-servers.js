@@ -43,7 +43,7 @@ export async function main(ns) {
       const upgradeCost = await easyRun(ns, "ns/getPurchasedServerUpgradeCost", bnServers[index], serverMaxRam * 2);
       if (Number.isFinite(upgradeCost)) {
         const playerMoney = (await easyRun(ns, "ns/getPlayer")).money; 
-        ns.print(`Price to upgrade: ${ns.formatNumber(upgradeCost)}, max spend: ${ns.formatNumber(playerMoney * spendingInfluence)}`);
+        ns.print(`Price to upgrade: ${ns.formatNumber(upgradeCost)}, max spend: ${ns.formatNumber(playerMoney)}`);
         if (upgradeCost < playerMoney) {
           ns.print("Trying to upgrade server for " + ns.formatNumber(upgradeCost) + "...");
           let upgradeSuccess = await easyRun(ns, "ns/upgradePurchasedServer", bnServers[index], serverMaxRam * 2);
