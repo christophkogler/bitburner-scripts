@@ -33,7 +33,7 @@ To use this script, deploy it on an NS server with the desired arguments for:
 /** @param {NS} ns */
 export async function main(ns) {
   const LOOPWAIT = (typeof ns.args[0] === 'number') ? ns.args[0] : 1; // default
-  const MAXSTACK = typeof ns.args[1] === 'number' ? ns.args[1] : 50;  // default to 50
+  const MAXSTACK = typeof ns.args[1] === 'number' ? ns.args[1] : 500;  // default to 500
   const WEAKEN_POWER = 0.05;
   const DEBUGFLAG = ns.args.includes('-d');
   
