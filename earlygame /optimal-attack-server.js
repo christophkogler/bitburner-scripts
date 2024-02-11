@@ -414,6 +414,7 @@ ${maxStackString} | ${networkRAMString}${COLOR_RESET}`;
     let targetHackTime = ns.getHackTime(targetStack[0]);
 
     // Handle EXTREMELY low runtimes by setting 'min' times that (should?) work
+    // SHOULD no longer be required, as swapped over to lategame-eht at low runtimes... but leave it just in case.
     if (targetGrowTime < 1) targetGrowTime = 1;
     if (targetWeakenTime < 1) targetWeakenTime = 1;
     if (targetHackTime < 1) targetHackTime = 1;
