@@ -1,5 +1,6 @@
 # bitburner-scripts
-Collection of personal BitBurner scripts.
+Loads of spoilers.
+Collection of personal BitBurner scripts remaining after completing all BN's besides 8 and deep 12.
 
 The script named 'easyRun.js' is used for turning the RAM costs linked to functions dynamic. 
 It must be present for most of these scripts to function.
