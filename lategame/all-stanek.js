@@ -6,6 +6,11 @@ export async function main(ns) {
   const chargeStanekRamCost = ns.getScriptRam("charge-stanek.js");
   const minFreeRam = 256;
   let lastStanekCharge = performance.now();
+  ns.write("charge-stanek.js", `/** @param {NS} ns */
+export async function main(ns) {
+  await ns.stanek.chargeFragment(ns.args[0], ns.args[1]);
+  ns.writePort(ns.pid, "done");
+}`, "w")
 
   while (true) {
     await ns.sleep(100);
@@ -51,6 +56,7 @@ export async function main(ns) {
       // Execute your script with the calculated threads for each fragment
       for (const fragment of stanekFragments) {
         if (fragment.threads > 0) {
+          
           ns.scp("charge-stanek.js", server.name, "home");
           const chargerPID = ns.exec("charge-stanek.js", server.name, fragment.threads, fragment.fragX, fragment.fragY);
           if (chargerPID === 0){
