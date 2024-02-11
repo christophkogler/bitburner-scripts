@@ -1,6 +1,6 @@
 # bitburner-scripts
 Collection of personal BitBurner scripts remaining after completing most of the game.  
-All scripts should be placed in the base directory of the home server. Placing them in a subdirectory (ie /earlygame/...) or operating them from a remote server (ie running on n00dles) is **not tested**.
+All scripts should be run from the base directory of the home server. Placing them in a subdirectory (ie /earlygame/...) or operating them from a remote server (ie running on n00dles) is **not tested**.
 
 # earlygame
 Scripts using mechanics solely from the early game, before seeing the truth.
