@@ -17,7 +17,7 @@ The script named 'easyRun.js' is used for turning the RAM costs linked to functi
 easyRun will generate a library of 'helper' scripts. These scripts essentially act as a API layer for accessing the base game functions, allowing for ghost workers which process a single function before dying instantly, and then return on a port. This methodology allows the 'main' script which is calling the functions to only use as much RAM as any _individual_ function would require at once + ~5GB.  
 
 # dev-menu
-This script allows opening a dev menu containing controls for most mechanics in the game, and some spoilers. Should remain functional until breaking 'webpack' changes.
+This script allows opening a dev menu containing controls for most mechanics in the game, so some spoilers. Should remain functional until breaking 'webpack' changes.
 
 # noodle-daemon
 An example of a dom exploit to eat noodles very fast. Yummy yummy!
