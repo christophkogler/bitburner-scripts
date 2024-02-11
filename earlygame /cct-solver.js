@@ -1,7 +1,8 @@
 /** @param {NS} ns */
 import {easyRun} from '/easyRun.js'; // easyRun executes (OR creates, as necessary) script-ized functions, for easy RAM dodging.
-export async function main(ns) {
-
+export async function main(ns) { 
+  // manual usage: run cct-solver.js contractName contractHost
+  
   let contractName = ns.args[0];
   let contractHost = ns.args[1];
 
