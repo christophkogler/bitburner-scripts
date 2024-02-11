@@ -16,7 +16,6 @@ export async function retrieveServerData(ns) {
     const serverData = ns.getServer(server);
     if (serverData.hasAdminRights) return;
     [ns.brutessh, ns.ftpcrack, ns.relaysmtp, ns.httpworm, ns.sqlinject, ns.nuke].map(func => { try { func(server) } catch { } })
-    ns.nuke(server);
   }
 
   let allServers = ["home"];
