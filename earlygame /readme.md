@@ -4,7 +4,7 @@ This directory contains scripts that contain no use of or reference to late-game
 Share RAM from all servers, to boost faction reputation gain.
 
 # cct-solver
-Given a contract name and the server it appears on, solves most contracts.
+Given a contract name and the server it appears on, solve (most) contracts.
 
 # crack-list
 Use tools on and attempt to nuke servers listed in the file 'server_list.txt' (which will be created by executing the script 'more-complex-scan').
