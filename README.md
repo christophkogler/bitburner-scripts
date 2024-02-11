@@ -1,6 +1,12 @@
 # bitburner-scripts
 Collection of personal BitBurner scripts remaining after completing most of the game.  
-All scripts should be placed in the base folder of the home server. Placing them in a subdirectory (ie /earlygame/...) or operating them from a remote server (ie running on n00dles) is **not tested**.
+All scripts should be placed in the base directory of the home server. Placing them in a subdirectory (ie /earlygame/...) or operating them from a remote server (ie running on n00dles) is **not tested**.
+
+# earlygame
+Scripts using mechanics solely from the early game, before seeing the truth.
+
+# lategame
+Scripts for mechanics from lategame.
 
 # drop-in-attack-server
 A batcher designed to literally drop in to a save and function. Uses 14.5GB, will batch using as much network RAM as necessary / available.
