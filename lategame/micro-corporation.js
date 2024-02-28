@@ -1685,10 +1685,6 @@ export async function main(ns) {
 
   function numberWithCommas(x) { return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
 
-  await ns.atExit(async() => {
-    await cancelAllBuys();
-    await cancelAllExports();
-    await cancelAllSells();
-  });
+  ns.atExit(() => {ns.run("corp-stop-script.js");});
 
 }
