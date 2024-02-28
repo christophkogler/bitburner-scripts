@@ -559,7 +559,7 @@ export async function main(ns) {
       let corpValuationModifier = bitnodeMultis.CorporationValuation;
       if (!(corpValuationModifier)) corpValuationModifier = 1;
       let investmentRound = investmentOffer.round;
-      let investmentGoal;
+      let investmentGoal = 0;
 
       if (investmentRound === 3){
         let baseRound3Investment = 1e15; // 1 quad
