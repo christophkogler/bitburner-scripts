@@ -10,7 +10,7 @@ Given a contract name and the server it appears on, solve (most) contracts.
 Use tools on and attempt to nuke servers listed in the file 'server_list.txt' (which will be created by executing the script 'more-complex-scan').
 
 # customGetServers
-An improved methodology of getting servers.
+An improved methodology of getting, opening ports, and nuking servers.
 
 # deep-traversal
 Provided a server name, get the path to it from home, and print to the terminal in a format designed for copying-and-pasting.
