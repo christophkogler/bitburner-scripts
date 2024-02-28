@@ -166,7 +166,11 @@ export async function main(ns) {
       for (const city of CITIES) {
         let officeData = await easyRun(ns, "corporation/getOffice", divisionName, city);
         if (officeData.avgEnergy < 95) { notAllOfficesEnergized = true; await easyRun(ns, "corporation/buyTea", divisionName, city); }
-        if (officeData.avgMorale < 95) { notAllOfficesHappy = true; await easyRun(ns, "corporation/throwParty", divisionName, city, 1e6); }
+        if (officeData.avgMorale < 95) { 
+          notAllOfficesHappy = true; 
+          let spendPerEmployee = 500000 * (Math.sqrt (Math.pow(officeData.avgMorale, 2) - 20 * officeData.avgMorale + 40 * officeData.maxMorale + 100) - officeData.avgMorale - 10);
+          await easyRun(ns, "corporation/throwParty", divisionName, city, spendPerEmployee); 
+        }
       }
       await relcalculateSleepTimer();
       await ns.sleep(SLEEP_TIMER);
@@ -321,11 +325,13 @@ export async function main(ns) {
     while (notAllOfficesEnergized || notAllOfficesHappy) {
       notAllOfficesEnergized = false; notAllOfficesHappy = false;
       let corpData = await easyRun(ns, "corporation/getCorporation");
-      for(const division of corpData.divisions){
-        for (const city of CITIES) {
-          let officeData = await easyRun(ns, "corporation/getOffice", division, city);
-          if (officeData.avgEnergy < 99) { notAllOfficesEnergized = true; await easyRun(ns, "corporation/buyTea", division, city); }
-          if (officeData.avgMorale < 99) { notAllOfficesHappy = true;await easyRun(ns, "corporation/throwParty", division, city, 1e6); }
+      for (const city of CITIES) {
+        let officeData = await easyRun(ns, "corporation/getOffice", divisionName, city);
+        if (officeData.avgEnergy < 95) { notAllOfficesEnergized = true; await easyRun(ns, "corporation/buyTea", divisionName, city); }
+        if (officeData.avgMorale < 95) { 
+          notAllOfficesHappy = true; 
+          let spendPerEmployee = 500000 * (Math.sqrt (Math.pow(officeData.avgMorale, 2) - 20 * officeData.avgMorale + 40 * officeData.maxMorale + 100) - officeData.avgMorale - 10);
+          await easyRun(ns, "corporation/throwParty", divisionName, city, spendPerEmployee); 
         }
       }
       ns.print("Waiting for energy & morale..." + counter++) 
@@ -459,9 +465,8 @@ export async function main(ns) {
           // Check and improve morale
           if (officeData.avgMorale < 95) {
             notAllOfficesHappy = true;
-            let corpData = await easyRun(ns, "corporation/getCorporation"); let corpCash = corpData.funds;
-            let spendPerEmployee = 1e6;
             ns.print("Low morale in " + division + "-" + city + ", throwing party.");
+            let spendPerEmployee = 500000 * (Math.sqrt (Math.pow(officeData.avgMorale, 2) - 20 * officeData.avgMorale + 40 * officeData.maxMorale + 100) - officeData.avgMorale - 10);
             let moraleImprovement = await easyRun(ns, "corporation/throwParty", division, city, spendPerEmployee);
             ns.print("Morale increased by " + moraleImprovement.toFixed(2) + "%");
           }
