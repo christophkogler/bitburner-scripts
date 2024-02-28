@@ -554,7 +554,7 @@ export async function main(ns) {
 
     //Round 3 & 4 investment handling.
     let investmentOffer = await easyRun(ns, "corporation/getInvestmentOffer");
-    if (investmentOffer !== undefined && investmentOffer !== null){
+    if (investmentOffer !== undefined && investmentOffer !== null && investmentOffer.round <= 4){
       let bitnodeMultis = await easyRun(ns, "ns/getBitNodeMultipliers");
       let corpValuationModifier = bitnodeMultis.CorporationValuation;
       if (!(corpValuationModifier)) corpValuationModifier = 1;
