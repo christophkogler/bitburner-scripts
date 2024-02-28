@@ -810,7 +810,7 @@ export async function main(ns) {
     } }
     return;
   }
-  async function cancelAllExports(){
+  async function cancelAllSells(){
     let corporationData = await easyRun(ns, "corporation/getCorporation");
     let corporationDivisions = corporationData.divisions;
     for (let division of corporationDivisions) { // cancel sells
@@ -826,7 +826,7 @@ export async function main(ns) {
     } } }
     return;
   }
-  async function cancelAllSells(){
+  async function cancelAllExports(){
     let corporationData = await easyRun(ns, "corporation/getCorporation");
     let corporationDivisions = corporationData.divisions;
     for (let division of corporationDivisions){ // cancel exports
