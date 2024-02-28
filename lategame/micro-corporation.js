@@ -569,9 +569,9 @@ export async function main(ns) {
         investmentGoal = round4InvestmentGoal;
         if(investmentOffer.funds >= round4InvestmentGoal){
           await easyRun(ns, "corporation/acceptInvestmentOffer");
+          await easyRun(ns, "corporation/goPublic", 0);
+          await easyRun(ns, "corporation/issueDividends", 0.01);
         }
-        await easyRun(ns, "corporation/goPublic", 0);
-        await easyRun(ns, "corporation/issueDividends", 0.01);
       }
       ns.print(`  Investment offer: ${ns.formatNumber(investmentOffer.funds,2)}, goal: ${ns.formatNumber(investmentGoal,2)}`)
     }
@@ -1435,10 +1435,8 @@ export async function main(ns) {
         }
 
         if (officeData.avgMorale < 100){
-          let corpData = await easyRun(ns, "corporation/getCorporation");
-          let corpCash = corpData.funds
-          let spendPerEmployee = (corpCash * .05) / officeData.numEmployees;
-          spendPerEmployee = spendPerEmployee > 100000 ? spendPerEmployee : 100000;
+          // Using DarkTechnomancer's spooky math
+          let spendPerEmployee = 500000 * (Math.sqrt (Math.pow(officeData.avgMorale, 2) - 20 * officeData.avgMorale + 40 * officeData.maxMorale + 100) - officeData.avgMorale - 10);
           ns.print("Low morale in " + divisionData.name + "-" + city + ", throwing party.");
           await easyRun(ns, "corporation/throwParty", divisionData.name, city, spendPerEmployee);
         }
