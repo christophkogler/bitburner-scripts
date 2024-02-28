@@ -3,6 +3,7 @@ import {easyRun} from '/easyRun.js'; // easyRun executes (OR creates, as necessa
 export async function main(ns) {
   ns.disableLog("sleep");
   ns.disableLog("run");
+  ns.atExit(() => {ns.run("corp-stop-script.js");});
 
   // PRETTY COLORS! (ANSI escape codes for text colorifcation)
   const COLOR_BLACK = "\u001b[30m"; 
@@ -1684,7 +1685,5 @@ export async function main(ns) {
   }//------------------------------------------------------------------------
 
   function numberWithCommas(x) { return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
-
-  ns.atExit(() => {ns.run("corp-stop-script.js");});
 
 }
