@@ -8,7 +8,7 @@ A batcher designed to literally drop in to a save and function. Uses 14.5GB, wil
 # easyRun
 The script named 'easyRun.js' is used for turning the RAM costs linked to functions dynamic. It must be present for most of these scripts to function.  
 
-easyRun will generate a library of 'helper' scripts. These scripts essentially act as a API layer for accessing the base game functions, allowing for ghost workers which process a single function before dying instantly, and then return on a port. This methodology allows the 'main' script which is calling the functions to only use as much RAM as any _individual_ function would require at once + ~5GB. 
+easyRun will generate a library of 'helper' scripts as functions are called through it. These scripts essentially act as a API layer for accessing the base game functions, allowing for ghost workers which process a single function before dying instantly, and then return on a port. This methodology allows the 'main' script which is calling the functions to only use as much RAM as any _individual_ function would require at once + ~5GB. 
 
 # earlygame
 Scripts using mechanics solely from the early game, before seeing the truth.
