@@ -1211,8 +1211,13 @@ export async function main(ns) {
           let newValue = 0;
           try {
             let productData = await easyRun(ns, "corporation/getProduct", division.name, "Sector-12", product);
-            if (productData && productData.desiredSellPrice && typeof productData.desiredSellPrice === "number") {
-              newValue = productData.desiredSellPrice;
+            if (productData && productData.desiredSellPrice){
+              if(typeof productData.desiredSellPrice === "number"){
+                newValue = productData.desiredSellPrice;
+              }
+              else if (typeof productData.desiredSellPrice === "string"){
+                newValue = parseFloat(productData.desiredSellPrice);
+              }
             }
           } catch { newValue = 25000; }
           if (isNaN(newValue)) { newValue = 25000;  }
@@ -1269,30 +1274,34 @@ export async function main(ns) {
             let value = 10000; // default if parsing fails without error
             // see if the product has a 'properly' formatted price
             if (typeof productData.desiredSellPrice === "string"){
-              //ns.print(`productData.desiredSellPrice is string.`)
-
-              try{ splitPrice = productData.desiredSellPrice.split("*");
-                badFormat = false; value = parseFloat(splitPrice[1]);
-              } catch{ badFormat = true; }
-              try{ splitPrice = productData.desiredSellPrice.split("+");
-                badFormat = false; value = parseFloat(splitPrice[1]);
-              } catch{ badFormat = true; }
+              //ns.print(`productData.desiredSellPrice is string, ${productData.desiredSellPrice}.`)
+              try{ 
+                value = parseFloat(productData.desiredSellPrice);
+                badFormat = false;
+                //ns.print(`value is ${value}.`)
+              } catch{ 
+                badFormat = true; 
+                ns.print(`ERROR:failed to convert desiredSellPrice to float.`)
+              }
 
             } else if (typeof productData.desiredSellPrice === "number"){
-              //ns.print(`productData.desiredSellPrice is number.`);
+              ns.print(`productData.desiredSellPrice is number.`);
               value = productData.desiredSellPrice;
               badFormat = false;
             } else {
-              ns.print(`ERROR: Bad desiredSellPrice format.`);
+              badFormat = true;
             }
-            
 
             if (isNaN(value)) {
               badFormat = true; // Default to 1 if parsing fails
+              ns.print(`ERROR:value was NaN!`);
             }
 
-            if (badFormat) { value = intializiationMultiplier; } //  if parsing fails, reinitialize
-            else {
+            //  if parsing fails, reinitialize
+            if (badFormat) { 
+              value = intializiationMultiplier; 
+              ns.print(`ERROR: Bad desiredSellPrice format.`);
+            } else {
               // Price adjustment logic
               let notSellingEnoughProduct = prodSellAmount < .95 * prodProductionAmount;
               let accumulatingProductInStorage =  productData.stored > prodProductionAmount * 10 ; // prodProductionAmount is /s... I think?
