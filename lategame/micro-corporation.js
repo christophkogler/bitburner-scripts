@@ -4,6 +4,7 @@ export async function main(ns) {
   ns.disableLog("sleep");
   ns.disableLog("run");
   ns.atExit(() => {ns.run("corp-stop-script.js");});
+  ns.tail();
 
   // PRETTY COLORS! (ANSI escape codes for text colorifcation)
   const COLOR_BLACK = "\u001b[30m"; 
@@ -111,91 +112,83 @@ export async function main(ns) {
 
   //  STAGE 1: Agriculture - 0-2m/s, funding round 0 -> 1
   if (STAGE1) {
-  // agri div initialization logic
-  const haveAgriDiv = (await easyRun(ns, "corporation/getCorporation")).divisions.includes("APH-Agri");
-  
-  let corpFunds;
-  let divisionName = "APH-Agri";
-
-  if (!haveAgriDiv){
-    ns.toast("ENTERING CORPORATION DEVELOPMENT STAGE 1: AGRICULTURE!", "info", SLEEP_TIMER)
-    //await ns.sleep(1000*10);
-
+    // agri div initialization logic
+    const haveAgriDiv = (await easyRun(ns, "corporation/getCorporation")).divisions.includes("APH-Agri");
+    
+    let corpFunds;
+    let divisionName = "APH-Agri";
 
     // ------------------------------- initialization -----------------------------
-    // Expand into Agriculture
-    await easyRun(ns, "corporation/expandIndustry", "Agriculture", divisionName); 
-    ns.toast("STAGE1: Expanded corporation into an Agriculture division!", "success", SLEEP_TIMER);
-    ns.print("Expanded corporation into an Agriculture division!");
-    // Setup in each city
-    for (const city of CITIES) {
-      // Expand division into city
-      await easyRun(ns, "corporation/expandCity", divisionName, city);
-      ns.print(`Expanded ${divisionName} into ${city}`);
-      // Purchase and setup warehouse
-      await easyRun(ns, "corporation/purchaseWarehouse", divisionName, city);
-      await easyRun(ns, "corporation/upgradeWarehouse", divisionName, city, 5);
-      corpFunds = await getCorpFunds();
-      ns.print(`Purchased and upgraded warehouse, corp funds:${ns.formatNumber(corpFunds)}!`);
-      // Hire employees and assign to Research & Development
-      let officeData = await easyRun(ns, "corporation/getOffice", divisionName, city);
-      let positionsToFill = officeData.size - officeData.numEmployees;
-      for (let i = 0; i < positionsToFill; ++i) {
-        await easyRun(ns, "corporation/hireEmployee", divisionName, city);
-      }
-      officeData = await easyRun(ns, "corporation/getOffice", divisionName, city);
-      let numEmployees = officeData.numEmployees;
-      await easyRun(ns, "corporation/setAutoJobAssignment", divisionName, city, "Research & Development", numEmployees);
-    }
-    ns.toast("STAGE1: Purchased and upgraded warehouses, and hired employees!", "success", SLEEP_TIMER);
-    corpFunds = await getCorpFunds();
-    ns.print(`Purchased and upgraded warehouses, corp funds:${ns.formatNumber(corpFunds)}!`);
+    if (!haveAgriDiv){
+      ns.toast("ENTERING CORPORATION DEVELOPMENT STAGE 1: AGRICULTURE!", "info", SLEEP_TIMER)
 
-    // Upgrade Smart Storage 
-    for (let i = 0; i < 9; ++i) { await easyRun(ns, "corporation/levelUpgrade", "Smart Storage"); }
-    ns.toast("STAGE1: Purchased Smart Storage!", "success", SLEEP_TIMER);
-    corpFunds = await getCorpFunds();
-    ns.print(`Purchased Smart Storage x9, corp funds:${ns.formatNumber(corpFunds)}!`); 
-    for (let i = 0; i < 2; ++i) { await easyRun(ns, "corporation/hireAdVert", divisionName); }
-    ns.toast("STAGE1: Purchased 2 AdVerts!", "success", SLEEP_TIMER);
-    ns.print("Purchased 2 AdVerts!");
-    // emnployee statuses...
-    let notAllOfficesEnergized = true; let notAllOfficesHappy = true;
-    ns.print("Buying tea and throwing parties.");
-    while (notAllOfficesEnergized || notAllOfficesHappy) {
-      notAllOfficesEnergized = false; notAllOfficesHappy = false;
+      // Expand into Agriculture
+      await easyRun(ns, "corporation/expandIndustry", "Agriculture", divisionName); 
+      ns.toast("STAGE1: Expanded corporation into an Agriculture division!", "success", SLEEP_TIMER);
+      ns.print("Expanded corporation into an Agriculture division!");
+      // Setup in each city
       for (const city of CITIES) {
-        let officeData = await easyRun(ns, "corporation/getOffice", divisionName, city);
-        if (officeData.avgEnergy < 95) { notAllOfficesEnergized = true; await easyRun(ns, "corporation/buyTea", divisionName, city); }
-        if (officeData.avgMorale < 95) { 
-          notAllOfficesHappy = true; 
-          let spendPerEmployee = 500000 * (Math.sqrt (Math.pow(officeData.avgMorale, 2) - 20 * officeData.avgMorale + 40 * officeData.maxMorale + 100) - officeData.avgMorale - 10);
-          await easyRun(ns, "corporation/throwParty", divisionName, city, spendPerEmployee); 
-        }
+        // Expand division into city
+        await easyRun(ns, "corporation/expandCity", divisionName, city);
+        ns.print(`Expanded ${divisionName} into ${city}`);
+        // Purchase and setup warehouse
+        await easyRun(ns, "corporation/purchaseWarehouse", divisionName, city);
+        await levelWarehouseTo(divisionName, city, 6);
+        corpFunds = await getCorpFunds();
+        ns.print(`Purchased and upgraded warehouse, corp funds:${ns.formatNumber(corpFunds)}!`);
+        // Hire employees and assign to Research & Development
+        await fillOffice(divisionName, city);
+        await assignAllToRnD(divisionName, city);
       }
-      await relcalculateSleepTimer();
-      await ns.sleep(SLEEP_TIMER);
+      ns.toast("STAGE1: Purchased and upgraded warehouses, and hired employees!", "success", SLEEP_TIMER);
+      corpFunds = await getCorpFunds();
+      ns.print(`Purchased and upgraded warehouses, corp funds:${ns.formatNumber(corpFunds)}!`);
+
+      // Upgrade Smart Storage 
+      await levelUpgradeTo("Smart Storage", 9);
+      ns.toast("STAGE1: Purchased Smart Storage!", "success", SLEEP_TIMER);
+      corpFunds = await getCorpFunds();
+      ns.print(`Purchased Smart Storage x9, corp funds:${ns.formatNumber(corpFunds)}!`); 
+      await levelAdVertTo(divisionName, 2);
+      ns.toast("STAGE1: Purchased 2 AdVerts!", "success", SLEEP_TIMER);
+      ns.print("Purchased 2 AdVerts!");
+      // emnployee statuses...
+      let notAllOfficesEnergized = true; let notAllOfficesHappy = true;
+      ns.print("Buying tea and throwing parties.");
+      while (notAllOfficesEnergized || notAllOfficesHappy) {
+        notAllOfficesEnergized = false; notAllOfficesHappy = false;
+        for (const city of CITIES) {
+          let officeData = await easyRun(ns, "corporation/getOffice", divisionName, city);
+          if (officeData.avgEnergy < 95) { notAllOfficesEnergized = true; await easyRun(ns, "corporation/buyTea", divisionName, city); }
+          if (officeData.avgMorale < 95) { 
+            notAllOfficesHappy = true; 
+            let spendPerEmployee = 500000 * (Math.sqrt (Math.pow(officeData.avgMorale, 2) - 20 * officeData.avgMorale + 40 * officeData.maxMorale + 100) - officeData.avgMorale - 10);
+            await easyRun(ns, "corporation/throwParty", divisionName, city, spendPerEmployee); 
+          }
+        }
+        await relcalculateSleepTimer();
+        await ns.sleep(SLEEP_TIMER);
+      }
+      ns.toast("STAGE1: Subdivisions energized and happy!", "success", SLEEP_TIMER);
+      ns.print("Subdivisions energized and happy!");
+      // Wait for more research points to accumulate
+      let divisionData = await easyRun(ns, "corporation/getDivision", divisionName);
+      let researchTarget = 200;
+      let notEnoughResearch = divisionData.researchPoints < researchTarget;
+      while (notEnoughResearch) {
+        ns.print(`Waiting for research points to accumulate: ${ns.formatNumber(divisionData.researchPoints, 1)} of ${researchTarget}`);
+        await relcalculateSleepTimer();
+        await ns.sleep(3*SLEEP_TIMER);
+        divisionData = await easyRun(ns, "corporation/getDivision", divisionName);
+        notEnoughResearch = divisionData.researchPoints < researchTarget;
+      }
+      ns.toast("STAGE1: Accumulated 100 research points!", "success", SLEEP_TIMER);
+      ns.print("Accumulated 100 research points!");
+      // reassign employees
+      for (const city of CITIES) { await easyRun(ns, "corporation/setAutoJobAssignment", divisionName, city, "Research & Development", 0); }
+      //------------------------------- end initialization block --------------------------------------------
     }
-    ns.toast("STAGE1: Subdivisions energized and happy!", "success", SLEEP_TIMER);
-    ns.print("Subdivisions energized and happy!");
-    // Wait for more research points to accumulate
-    let divisionData = await easyRun(ns, "corporation/getDivision", divisionName);
-    let researchTarget = 200;
-    let notEnoughResearch = divisionData.researchPoints < researchTarget;
-    while (notEnoughResearch) {
-      ns.print(`Waiting for research points to accumulate: ${ns.formatNumber(divisionData.researchPoints, 1)} of ${researchTarget}`);
-      await relcalculateSleepTimer();
-      await ns.sleep(3*SLEEP_TIMER);
-      divisionData = await easyRun(ns, "corporation/getDivision", divisionName);
-      notEnoughResearch = divisionData.researchPoints < researchTarget;
-    }
-    ns.toast("STAGE1: Accumulated 100 research points!", "success", SLEEP_TIMER);
-    ns.print("Accumulated 100 research points!");
-    // reassign employees
-    for (const city of CITIES) { await easyRun(ns, "corporation/setAutoJobAssignment", divisionName, city, "Research & Development", 0); }
-    //------------------------------- end initialization block --------------------------------------------
-  }
-  // stage 1 maintenance loop
+    // stage 1 maintenance loop
     // main loop
     // purchaseUsefulItems() WILL send corp into debt
     let haveNotInvested = true;
@@ -208,7 +201,7 @@ export async function main(ns) {
       let postInvestmentFunds = corpFunds + investmentOffer.funds
       ns.print(`Investment offer: ${ns.formatNumber(investmentOffer.funds, 2)}, post-investment funds: ${ns.formatNumber(postInvestmentFunds, 2)}, investment round: ${investmentOffer.round}`);
 
-      if(postInvestmentFunds >= 435e9){
+      if(postInvestmentFunds >= 437e9){
         await easyRun(ns, "corporation/acceptInvestmentOffer");
         STAGE1 = false;
         STAGE2 = true;
@@ -228,18 +221,15 @@ export async function main(ns) {
     corpFunds = await getCorpFunds();
     ns.print("Took investment offer! Corp funds: "+ corpFunds);
 
-    // Buy 6 more adverts for a total of 8
-    for (let i = 0; i < 6; ++i) { 
-      await easyRun(ns, "corporation/hireAdVert", divisionName); 
-      corpFunds = await getCorpFunds();
-      ns.print(`Remaining funds after buying advert ${i+1}: ${ns.formatNumber(corpFunds, 2)}`)
-    }
+    await levelAdVertTo(divisionName, 8)
+    corpFunds = await getCorpFunds();
+    ns.print(`Remaining funds after buying additional adverts: ${ns.formatNumber(corpFunds, 2)}`)
 
     // complete agriculture buildout, and set all emplyoees to R&D
     for (const city of CITIES){
       ns.print(`In City ${city}`)
       // upgrade warehouses
-      await easyRun(ns, "corporation/upgradeWarehouse", divisionName, city, 9);
+      await levelWarehouseTo(divisionName, city, 15);
       let corpFunds = await getCorpFunds();
       ns.print(`  Remaining funds after warehouse upgrades: ${ns.formatNumber(corpFunds, 2)}`)
 
@@ -252,11 +242,8 @@ export async function main(ns) {
       ns.print(`  Remaining funds after expanding office: ${ns.formatNumber(corpFunds, 2)}`)
 
       // Hire employees, and assign to Research & Development
-      let officeData = await easyRun(ns, "corporation/getOffice", divisionName, city);
-      let positionsToFill = officeData.size - officeData.numEmployees;
-      for (let i = 0; i < positionsToFill; ++i) { await easyRun(ns, "corporation/hireEmployee", divisionName, city); }
-      officeData = await easyRun(ns, "corporation/getOffice", divisionName, city);
-      await easyRun(ns, "corporation/setAutoJobAssignment", divisionName, city, "Research & Development", officeData.numEmployees);
+      await fillOffice(divisionName, city);
+      await assignAllToRnD(divisionName, city);
     }
 
     corpFunds = await getCorpFunds();
@@ -268,111 +255,100 @@ export async function main(ns) {
 // STAGE 2: Chemical - 2.5m-3.5m, funding round 1->2
 // using investment funds to grow profit
   if (STAGE2){
-  // stage 2 initialization logic...
-  let divisionName = "APH-Chem";
-  const haveChemDiv = (await easyRun(ns, "corporation/getCorporation")).divisions.includes(divisionName);
-  let corpFunds;
-  if (!haveChemDiv){
-    ns.toast("ENTERING CORPORATION DEVELOPMENT STAGE 2: CHEMICALS!", "info", 10000);
+    // stage 2 initialization logic...
+    let divisionName = "APH-Chem";
+    const haveChemDiv = (await easyRun(ns, "corporation/getCorporation")).divisions.includes(divisionName);
+    let corpFunds;
+    if (!haveChemDiv){
+      ns.toast("ENTERING CORPORATION DEVELOPMENT STAGE 2: CHEMICALS!", "info", 10000);
 
-    // Expand into Chemical
-    await easyRun(ns, "corporation/expandIndustry", "Chemical", divisionName);
-    corpFunds = await getCorpFunds();
-    ns.print(`Remaining funds after expanding into Chemical: ${ns.formatNumber(corpFunds, 2)}`)
+      // Expand into Chemical
+      await easyRun(ns, "corporation/expandIndustry", "Chemical", divisionName);
+      corpFunds = await getCorpFunds();
+      ns.print(`Remaining funds after expanding into Chemical: ${ns.formatNumber(corpFunds, 2)}`)
 
-    // corporation unlock: Export
-    await easyRun(ns, "corporation/purchaseUnlock", "Export");
-    corpFunds = await getCorpFunds();
-    ns.print(`Remaining funds after unlocking Exports: ${ns.formatNumber(corpFunds, 2)}`)
+      // corporation unlock: Export
+      await easyRun(ns, "corporation/purchaseUnlock", "Export");
+      corpFunds = await getCorpFunds();
+      ns.print(`Remaining funds after unlocking Exports: ${ns.formatNumber(corpFunds, 2)}`)
 
-    // Upgrade Smart Storage 
-    for (let i = 0; i < 16; ++i) {
-      await easyRun(ns, "corporation/levelUpgrade", "Smart Storage"); // bring smart storage to level 25
-      await easyRun(ns, "corporation/levelUpgrade", "Smart Factories"); // bring smart factories to level 16
-    }
-    corpFunds = await getCorpFunds();
-    ns.print(`Remaining funds after upgrading Smart Storage and Smart Factories: ${ns.formatNumber(corpFunds, 2)}`)
-
-    // Setup in each city
-    for (const city of CITIES) {
-      // Expand division into city
-      await easyRun(ns, "corporation/expandCity", divisionName, city);
-      ns.print(`Expanded ${divisionName} into ${city}`);
-
-      // Purchase and initial upgrade warehouse
-      await easyRun(ns, "corporation/purchaseWarehouse", divisionName, city);
-      await easyRun(ns, "corporation/upgradeWarehouse", divisionName, city, 2);
+      // Upgrade Smart Storage & Factories
+      await levelUpgradeTo("Smart Storage", 25);
+      await levelUpgradeTo("Smart Factories", 16)
       
       corpFunds = await getCorpFunds();
-      ns.print(`Remaining funds after purchasing & upgrading ${city} warehouse: ${ns.formatNumber(corpFunds, 2)}`)
+      ns.print(`Remaining funds after upgrading Smart Storage and Smart Factories: ${ns.formatNumber(corpFunds, 2)}`)
 
-      // Hire employees
-      const officeData1 = await easyRun(ns, "corporation/getOffice", divisionName, city);
-      //ns.print(`officeData1: ${JSON.stringify(officeData1)}`)
-      let positionsToFill = officeData1.size - officeData1.numEmployees;
-      for (let i = 0; i < positionsToFill; ++i) {
-        await easyRun(ns, "corporation/hireEmployee", divisionName, city);
-      }
-
-      const officeData2 = await easyRun(ns, "corporation/getOffice", divisionName, city);
-      //ns.print(`officeData2: ${JSON.stringify(officeData2)}`)
-      let employeeCount = officeData2.numEmployees
-      //ns.print("employeeCount: "+employeeCount)
-      await easyRun(ns, "corporation/setAutoJobAssignment", divisionName, city, "Research & Development", officeData2.numEmployees);
-    }
-
-    // increase energy and morale
-    let notAllOfficesEnergized = true; let notAllOfficesHappy = true;
-    while (notAllOfficesEnergized || notAllOfficesHappy) {
-      notAllOfficesEnergized = false; notAllOfficesHappy = false;
-      let corpData = await easyRun(ns, "corporation/getCorporation");
+      // Setup in each city
       for (const city of CITIES) {
-        let officeData = await easyRun(ns, "corporation/getOffice", divisionName, city);
-        if (officeData.avgEnergy < 95) { notAllOfficesEnergized = true; await easyRun(ns, "corporation/buyTea", divisionName, city); }
-        if (officeData.avgMorale < 95) { 
-          notAllOfficesHappy = true; 
-          let spendPerEmployee = 500000 * (Math.sqrt (Math.pow(officeData.avgMorale, 2) - 20 * officeData.avgMorale + 40 * officeData.maxMorale + 100) - officeData.avgMorale - 10);
-          await easyRun(ns, "corporation/throwParty", divisionName, city, spendPerEmployee); 
-        }
+        // Expand division into city
+        await easyRun(ns, "corporation/expandCity", divisionName, city);
+        ns.print(`Expanded ${divisionName} into ${city}`);
+
+        // Purchase and initial upgrade warehouse
+        await easyRun(ns, "corporation/purchaseWarehouse", divisionName, city);
+        await levelWarehouseTo(divisionName, city, 3);
+        
+        corpFunds = await getCorpFunds();
+        ns.print(`Remaining funds after purchasing & upgrading ${city} warehouse: ${ns.formatNumber(corpFunds, 2)}`)
+
+        // Hire employees
+        await fillOffice(divisionName, city);
+        await assignAllToRnD(divisionName, city);
       }
-      ns.print("Waiting for energy & morale..." + counter++) 
-      await relcalculateSleepTimer();
-      await ns.sleep(SLEEP_TIMER);
-    }// energy and morale above 97%
 
-    // wait for reserach to build up
-    let agriData = await easyRun(ns, "corporation/getDivision", "APH-Agri");
-    let notEnoughAgriResearch = agriData.researchPoints < 600;
+      // increase energy and morale
+      let notAllOfficesEnergized = true; let notAllOfficesHappy = true;
+      while (notAllOfficesEnergized || notAllOfficesHappy) {
+        notAllOfficesEnergized = false; notAllOfficesHappy = false;
+        let corpData = await easyRun(ns, "corporation/getCorporation");
+        for (const city of CITIES) {
+          let officeData = await easyRun(ns, "corporation/getOffice", divisionName, city);
+          if (officeData.avgEnergy < 95) { notAllOfficesEnergized = true; await easyRun(ns, "corporation/buyTea", divisionName, city); }
+          if (officeData.avgMorale < 95) { 
+            notAllOfficesHappy = true; 
+            let spendPerEmployee = 500000 * (Math.sqrt (Math.pow(officeData.avgMorale, 2) - 20 * officeData.avgMorale + 40 * officeData.maxMorale + 100) - officeData.avgMorale - 10);
+            await easyRun(ns, "corporation/throwParty", divisionName, city, spendPerEmployee); 
+          }
+        }
+        ns.print("Waiting for energy & morale..." + counter++) 
+        await relcalculateSleepTimer();
+        await ns.sleep(SLEEP_TIMER);
+      }// energy and morale above 97%
 
-    let chemData = await easyRun(ns, "corporation/getDivision", "APH-Chem");
-    let notEnoughChemResearch = chemData.researchPoints < 400;
-    while (notEnoughAgriResearch || notEnoughChemResearch){
-      ns.print(`${COLOR_CYAN}Waiting for research points... ${counter++}${COLOR_RESET}`)
-      agriData = await easyRun(ns, "corporation/getDivision", "APH-Agri");
-      notEnoughAgriResearch = agriData.researchPoints < 600;
+      // wait for reserach to build up
+      let agriData = await easyRun(ns, "corporation/getDivision", "APH-Agri");
+      let notEnoughAgriResearch = agriData.researchPoints < 600;
 
-      chemData = await easyRun(ns, "corporation/getDivision", "APH-Chem");
-      notEnoughChemResearch = chemData.researchPoints < 400;
-      ns.print(`Agri research: ${ns.formatNumber(agriData.researchPoints,1)}, Chem research: ${ns.formatNumber(chemData.researchPoints,1)}`);
-      await relcalculateSleepTimer();
-      await ns.sleep(3*SLEEP_TIMER);
-    }// sufficient research; return to normal operations
+      let chemData = await easyRun(ns, "corporation/getDivision", "APH-Chem");
+      let notEnoughChemResearch = chemData.researchPoints < 400;
+      while (notEnoughAgriResearch || notEnoughChemResearch){
+        ns.print(`${COLOR_CYAN}Waiting for research points... ${counter++}${COLOR_RESET}`)
+        agriData = await easyRun(ns, "corporation/getDivision", "APH-Agri");
+        notEnoughAgriResearch = agriData.researchPoints < 600;
 
-    // reassign employees
-    for (const city of CITIES){
-      await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Agri", city, "Research & Development", 0);
-      await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Agri", city, "Operations", 2);
-      await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Agri", city, "Engineer", 1);
-      await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Agri", city, "Business", 2);
-      await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Agri", city, "Management", 1);
+        chemData = await easyRun(ns, "corporation/getDivision", "APH-Chem");
+        notEnoughChemResearch = chemData.researchPoints < 400;
+        ns.print(`Agri research: ${ns.formatNumber(agriData.researchPoints,1)}, Chem research: ${ns.formatNumber(chemData.researchPoints,1)}`);
+        await relcalculateSleepTimer();
+        await ns.sleep(3*SLEEP_TIMER);
+      }// sufficient research; return to normal operations
 
-      await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Chem", city, "Research & Development", 0);
-      await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Chem", city, "Operations", 1);
-      await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Chem", city, "Engineer", 1);
-      await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Chem", city, "Business", 1);
+      // reassign employees
+      for (const city of CITIES){
+        await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Agri", city, "Research & Development", 0);
+        await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Agri", city, "Operations", 2);
+        await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Agri", city, "Engineer", 1);
+        await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Agri", city, "Business", 2);
+        await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Agri", city, "Management", 1);
+
+        await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Chem", city, "Research & Development", 0);
+        await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Chem", city, "Operations", 1);
+        await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Chem", city, "Engineer", 1);
+        await easyRun(ns, "corporation/setAutoJobAssignment", "APH-Chem", city, "Business", 1);
+      }
     }
-  }
-  // stage 2 maintenance loop
+    // stage 2 maintenance loop
     //  while (have not taken investment offer)
     //  probably go into debt on this stage, too
     let haveNotInvested = true;
@@ -433,11 +409,7 @@ export async function main(ns) {
       await easyRun(ns, "corporation/upgradeOfficeSize", divisionName, city, 30);
       
       // Hire employees
-      let officeData = await easyRun(ns, "corporation/getOffice", divisionName, city);
-      let positionsToFill = officeData.size - officeData.numEmployees;
-      for (let i = 0; i < positionsToFill; ++i) {
-        await easyRun(ns, "corporation/hireEmployee", divisionName, city);
-      }
+      await fillOffice(divisionName, city);
     }
 
     await manageEmployees();
@@ -466,7 +438,7 @@ export async function main(ns) {
           // Check and improve morale
           if (officeData.avgMorale < 95) {
             notAllOfficesHappy = true;
-            ns.print("Low morale in " + division + "-" + city + ", throwing party.");
+            ns.print(`Low morale in ${division}-${city}, throwing party.`);
             let spendPerEmployee = 500000 * (Math.sqrt (Math.pow(officeData.avgMorale, 2) - 20 * officeData.avgMorale + 40 * officeData.maxMorale + 100) - officeData.avgMorale - 10);
             let moraleImprovement = await easyRun(ns, "corporation/throwParty", division, city, spendPerEmployee);
             ns.print("Morale increased by " + moraleImprovement.toFixed(2) + "%");
@@ -1537,7 +1509,19 @@ export async function main(ns) {
     }
     return;
   }//------------------------------------------------------------------------
-
+  async function fillOffice(divisionName, city){
+    let officeData = await easyRun(ns, "corporation/getOffice", divisionName, city);
+    let positionsToFill = officeData.size - officeData.numEmployees;
+    for (let i = 0; i < positionsToFill; ++i) {
+      await easyRun(ns, "corporation/hireEmployee", divisionName, city);
+    }
+  }
+  async function assignAllToRnD(divisionName, city){
+    for(let position of EMPLOYEE_POSITIONS) await easyRun(ns, "corporation/setAutoJobAssignment", divisionName, city, position, 0);
+    let officeData = await easyRun(ns, "corporation/getOffice", divisionName, city);
+    let employees = officeData.numEmployees;
+    await easyRun(ns, "corporation/setAutoJobAssignment", divisionName, city, "Research & Development", 0);
+  }
 
 
   // 200 GB
@@ -1695,4 +1679,31 @@ export async function main(ns) {
 
   function numberWithCommas(x) { return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
 
+  async function levelWarehouseTo(divisionName, city, targetLevel){
+    let warehouseData = await easyRun(ns, "corporation/getWarehouse", divisionName, city);
+    let warehouseLevel = warehouseData.level;
+    if(warehouseLevel < targetLevel){
+      let levelsToUpgrade = targetLevel - warehouseLevel;
+      await easyRun(ns, "corporation/upgradeWarehouse", divisionName, city, levelsToUpgrade);
+    }
+  }
+  async function levelUpgradeTo(upgradeName, targetLevel){
+    let levelOfUpgrade = await easyRun(ns, "corporation/getUpgradeLevel", upgradeName);
+    if(levelOfUpgrade < targetLevel){
+      let levelsToUpgrade = targetLevel - levelOfUpgrade;
+      for(let i = 0; i < levelsToUpgrade; i++){
+        await easyRun(ns, "corporation/levelUpgrade", upgradeName);
+      }
+    }
+  }
+  async function levelAdVertTo(divisionName, targetLevel){
+    let divisionData = await easyRun(ns, "corporation/getDivision", divisionName);
+    let numAdVerts = divisionData.numAdVerts;
+    if(numAdVerts < targetLevel){
+      let acquireAdVerts = targetLevel - numAdVerts;
+      for(let i = 0; i < acquireAdVerts; i++){
+        await easyRun(ns, "corporation/hireAdVert", divisionName);
+      }
+    }
+  }
 }
