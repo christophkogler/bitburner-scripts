@@ -201,7 +201,7 @@ export async function main(ns) {
       let postInvestmentFunds = corpFunds + investmentOffer.funds
       ns.print(`Investment offer: ${ns.formatNumber(investmentOffer.funds, 2)}, post-investment funds: ${ns.formatNumber(postInvestmentFunds, 2)}, investment round: ${investmentOffer.round}`);
 
-      if(postInvestmentFunds >= 437e9){
+      if(postInvestmentFunds >= 435e9){
         await easyRun(ns, "corporation/acceptInvestmentOffer");
         STAGE1 = false;
         STAGE2 = true;
@@ -221,17 +221,17 @@ export async function main(ns) {
     corpFunds = await getCorpFunds();
     ns.print("Took investment offer! Corp funds: "+ corpFunds);
 
-    await levelAdVertTo(divisionName, 8)
+    await levelAdVertTo(divisionName, 8);
     corpFunds = await getCorpFunds();
-    ns.print(`Remaining funds after buying additional adverts: ${ns.formatNumber(corpFunds, 2)}`)
+    ns.print(`Remaining funds after buying additional adverts: ${ns.formatNumber(corpFunds, 2)}`);
 
     // complete agriculture buildout, and set all emplyoees to R&D
     for (const city of CITIES){
-      ns.print(`In City ${city}`)
+      ns.print(`In City ${city}`);
       // upgrade warehouses
       await levelWarehouseTo(divisionName, city, 15);
       let corpFunds = await getCorpFunds();
-      ns.print(`  Remaining funds after warehouse upgrades: ${ns.formatNumber(corpFunds, 2)}`)
+      ns.print(`  Remaining funds after warehouse upgrades: ${ns.formatNumber(corpFunds, 2)}`);
 
       // reset employees
       for (const position of EMPLOYEE_POSITIONS){ await easyRun(ns, "corporation/setAutoJobAssignment", divisionName, city, position, 0); }
@@ -239,7 +239,7 @@ export async function main(ns) {
       // Expand offices
       await easyRun(ns, "corporation/upgradeOfficeSize", divisionName, city, 3);
       corpFunds = await getCorpFunds();
-      ns.print(`  Remaining funds after expanding office: ${ns.formatNumber(corpFunds, 2)}`)
+      ns.print(`  Remaining funds after expanding office: ${ns.formatNumber(corpFunds, 2)}`);
 
       // Hire employees, and assign to Research & Development
       await fillOffice(divisionName, city);
@@ -271,10 +271,6 @@ export async function main(ns) {
       await easyRun(ns, "corporation/purchaseUnlock", "Export");
       corpFunds = await getCorpFunds();
       ns.print(`Remaining funds after unlocking Exports: ${ns.formatNumber(corpFunds, 2)}`)
-
-      // Upgrade Smart Storage & Factories
-      await levelUpgradeTo("Smart Storage", 25);
-      await levelUpgradeTo("Smart Factories", 16)
       
       corpFunds = await getCorpFunds();
       ns.print(`Remaining funds after upgrading Smart Storage and Smart Factories: ${ns.formatNumber(corpFunds, 2)}`)
@@ -296,6 +292,10 @@ export async function main(ns) {
         await fillOffice(divisionName, city);
         await assignAllToRnD(divisionName, city);
       }
+
+      // Upgrade Smart Storage & Factories
+      await levelUpgradeTo("Smart Storage", 25);
+      await levelUpgradeTo("Smart Factories", 16)
 
       // increase energy and morale
       let notAllOfficesEnergized = true; let notAllOfficesHappy = true;
@@ -1520,7 +1520,7 @@ export async function main(ns) {
     for(let position of EMPLOYEE_POSITIONS) await easyRun(ns, "corporation/setAutoJobAssignment", divisionName, city, position, 0);
     let officeData = await easyRun(ns, "corporation/getOffice", divisionName, city);
     let employees = officeData.numEmployees;
-    await easyRun(ns, "corporation/setAutoJobAssignment", divisionName, city, "Research & Development", 0);
+    await easyRun(ns, "corporation/setAutoJobAssignment", divisionName, city, "Research & Development", employees);
   }
 
 
