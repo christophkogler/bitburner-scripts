@@ -43,7 +43,8 @@ export async function main(ns) { // THIS SCRIPT PROGRAMATICALLY CONTROLS A GANG
 
   // Cycle duration settings
   const WORK_CYCLE_DURATION = 19.5;
-  let SLEEP_TIME = 1000;
+  let BASE_SLEEP_TIME = 2000
+  let SLEEP_TIME = 2000;
   let INTERAL_WAIT = 2*SLEEP_TIME;
 
 
@@ -59,7 +60,7 @@ export async function main(ns) { // THIS SCRIPT PROGRAMATICALLY CONTROLS A GANG
 
   async function updateTiming(){
     const bonusTime = await easyRun(ns, "gang/getBonusTime");
-    SLEEP_TIME = bonusTime > 1000 ? SLEEP_TIME = 1000/25 : SLEEP_TIME = 1000;
+    SLEEP_TIME = bonusTime > 2000 ? SLEEP_TIME = BASE_SLEEP_TIME/25 : SLEEP_TIME = BASE_SLEEP_TIME;
     INTERAL_WAIT = 2 * SLEEP_TIME;
   }
 
